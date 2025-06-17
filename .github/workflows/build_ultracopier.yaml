@@ -1,0 +1,44 @@
+name: Build and Release Ultracopier
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Instalar dependencias
+      run: |
+        sudo apt update
+        sudo apt install -y make gcc build-essential libssl-dev qtbase6-dev qtchooser qt6-qmake qtbase6-dev-tools qttools6-dev-tools
+
+    - name: Clonar el repositorio Ultracopier
+      run: |
+        git clone https://github.com/alphaonex86/Ultracopier
+        cd Ultracopier
+
+    - name: Extraer versión desde Version.h
+      id: get_version
+      run: |
+        cd Ultracopier
+        version=$(grep '#define ULTRACOPIER_VERSION' Version.h | cut -d'"' -f2)
+        echo "version=$version" >> $GITHUB_OUTPUT
+
+    - name: Compilar Ultracopier
+      run: |
+        cd Ultracopier
+        find ./ -name '*.ts' -exec lrelease {} \;
+        qmake ultracopier.pro
+        make -j$(nproc)
+
+    - name: Crear release y subir binario
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Ultracopier v${{ steps.get_version.outputs.version }}
+        files: Ultracopier/ultracopier
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
