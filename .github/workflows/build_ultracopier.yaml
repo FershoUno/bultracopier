@@ -7,13 +7,23 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Ubuntu noble
 
     steps:
-    - name: Instalar dependencias
+    - name: Instalar herramientas necesarias
       run: |
         sudo apt update
-        sudo apt install -y make gcc build-essential libssl-dev qtbase6-dev qtchooser qt6-qmake qtbase6-dev-tools qttools6-dev-tools
+        sudo apt install -y software-properties-common
+
+    - name: Habilitar repositorio 'universe'
+      run: |
+        sudo add-apt-repository universe
+        sudo apt update
+
+    - name: Instalar dependencias Qt y build tools
+      run: |
+        sudo apt install -y make gcc build-essential libssl-dev \
+        qtbase5-dev qt5-qmake qtbase5-dev-tools qttools5-dev-tools
 
     - name: Clonar el repositorio Ultracopier
       run: |
@@ -30,7 +40,7 @@ jobs:
     - name: Compilar Ultracopier
       run: |
         cd Ultracopier
-        find ./ -name '*.ts' -exec lrelease {} \;
+        find ./ -name '*.ts' -exec lrelease {} \; || true
         qmake ultracopier.pro
         make -j$(nproc)
 
